@@ -462,14 +462,17 @@ export function formatDayLabel(key: string): string {
   return d.toLocaleDateString("en-US", { weekday: "short", month: "long", day: "numeric", timeZone: "UTC" });
 }
 
-export function channelAccent(channel: Channel): string {
-  const map: Record<Channel, string> = {
-    Instagram: "var(--chart-3)",
-    Email: "var(--chart-1)",
-    LinkedIn: "var(--chart-2)",
-    X: "var(--chart-4)",
-    WhatsApp: "var(--chart-5)",
-    Other: "var(--muted-foreground)",
+export function channelAccent(channel: Channel | string): string {
+  const map: Record<string, string> = {
+    Instagram: "hsl(330, 85%, 60%)", // Vibrant Magenta / Pink
+    YouTube: "hsl(0, 88%, 56%)",     // Bright YouTube Red
+    TikTok: "hsl(180, 95%, 46%)",    // Electric Neon Cyan / Aqua
+    Podcast: "hsl(270, 88%, 62%)",   // Royal Electric Purple
+    Email: "hsl(38, 95%, 52%)",      // Bright Golden Amber
+    LinkedIn: "hsl(217, 92%, 58%)",  // Iconic LinkedIn Blue
+    X: "hsl(199, 90%, 58%)",         // Sky Blue
+    WhatsApp: "hsl(142, 76%, 46%)",  // Vibrant Emerald Green
+    Other: "hsl(220, 15%, 60%)",     // Clean Slate Neutral
   };
-  return map[channel];
+  return map[channel] || "hsl(220, 15%, 60%)";
 }
