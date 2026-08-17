@@ -5,13 +5,16 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "pulse_workspace_logo";
+export const DEFAULT_LOGO = "/logo.png";
 
 export function getStoredWorkspaceLogo(): string | null {
-  if (typeof window === "undefined") return null;
+  if (typeof window === "undefined") return DEFAULT_LOGO;
   try {
-    return localStorage.getItem(STORAGE_KEY);
+    const custom = localStorage.getItem(STORAGE_KEY);
+    if (custom === "none") return null;
+    return custom || DEFAULT_LOGO;
   } catch {
-    return null;
+    return DEFAULT_LOGO;
   }
 }
 
@@ -21,7 +24,7 @@ export function setStoredWorkspaceLogo(url: string | null) {
     if (url) {
       localStorage.setItem(STORAGE_KEY, url);
     } else {
-      localStorage.removeItem(STORAGE_KEY);
+      localStorage.setItem(STORAGE_KEY, "none");
     }
     window.dispatchEvent(new CustomEvent("pulse-logo-updated", { detail: url }));
   } catch (err) {
@@ -130,7 +133,7 @@ export function WorkspaceLogo({
             <img
               src={logoUrl}
               alt="Workspace logo"
-              className="h-full w-full object-cover"
+              className="h-full w-full object-contain p-0.5 rounded-md"
             />
             {editable ? (
               <div
