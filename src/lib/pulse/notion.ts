@@ -45,8 +45,11 @@ export function extractNotionDatabaseId(input: string): string {
   if (!input) return "";
   const trimmed = input.trim();
   const match = trimmed.match(/([a-f0-9]{32})/i) || trimmed.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i);
-  if (match) return match[1].replace(/-/g, "");
-  return trimmed.replace(/-/g, "");
+  const rawId = match ? match[1].replace(/-/g, "") : trimmed.replace(/-/g, "");
+  if (rawId.length === 32) {
+    return `${rawId.slice(0, 8)}-${rawId.slice(8, 12)}-${rawId.slice(12, 16)}-${rawId.slice(16, 20)}-${rawId.slice(20)}`;
+  }
+  return rawId;
 }
 
 export function getStoredNotionConfig(): NotionConfig {

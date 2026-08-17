@@ -65,12 +65,14 @@ export default {
         const notionPath = url.pathname.replace(/^\/api\/notion/, "") + url.search;
         const targetUrl = `https://api.notion.com/v1${notionPath.startsWith("/") ? notionPath : `/${notionPath}`}`;
 
-        const forwardHeaders: Record<string, string> = {};
-        request.headers.forEach((value, key) => {
-          if (key.toLowerCase() !== "host") {
-            forwardHeaders[key] = value;
-          }
-        });
+        const authHeader = request.headers.get("authorization") || "";
+        const notionVersion = request.headers.get("notion-version") || "2022-06-28";
+
+        const forwardHeaders: Record<string, string> = {
+          "Authorization": authHeader,
+          "Notion-Version": notionVersion,
+          "Content-Type": "application/json",
+        };
 
         const bodyData = ["GET", "HEAD"].includes(request.method) ? undefined : await request.text();
 
