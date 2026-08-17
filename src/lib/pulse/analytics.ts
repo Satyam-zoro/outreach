@@ -221,6 +221,9 @@ export function getStageConversions(current: Totals, previous: Totals): StageCon
 
 /** The stage that lost the most ground versus the previous period. */
 export function getWeakestStage(stages: StageConversion[]): StageConversion & { change: number } {
+  if (stages.length === 0) {
+    return { id: "none", label: "None", value: 0, previous: 0, change: 0 };
+  }
   const scored = stages.map((s) => ({ ...s, change: delta(s.value, s.previous) }));
   return scored.reduce((worst, s) => (s.change < worst.change ? s : worst), scored[0]!);
 }
@@ -318,8 +321,11 @@ export interface BestWindow {
 
 export function getBestOutreachTime(): BestWindow {
   const facts = getTimeSlotFacts();
+  const defaultSlot = { weekday: 1, hour: 14, sent: 0, replies: 0, positive: 0 };
   const names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-  const best = facts.reduce((b, f) => (rate(f.replies, f.sent) > rate(b.replies, b.sent) ? f : b), facts[0]!);
+  const best = facts.length > 0
+    ? facts.reduce((b, f) => (rate(f.replies, f.sent) > rate(b.replies, b.sent) ? f : b), facts[0] || defaultSlot)
+    : defaultSlot;
   const avg = rate(
     facts.reduce((a, f) => a + f.replies, 0),
     facts.reduce((a, f) => a + f.sent, 0),
@@ -327,7 +333,7 @@ export function getBestOutreachTime(): BestWindow {
   const bestRate = rate(best.replies, best.sent);
   const fmt = (h: number) => `${((h + 11) % 12) + 1}:00 ${h < 12 ? "AM" : "PM"}`;
   return {
-    weekday: names[best.weekday]!,
+    weekday: names[best.weekday] || "Tuesday",
     window: `${fmt(best.hour)} – ${fmt(best.hour + 2)}`,
     replyRate: bestRate,
     liftVsAverage: delta(bestRate, avg),
@@ -380,13 +386,18 @@ export function getInsights(filters: Filters): Insight[] {
 
   // Best follow-up step
   const fu = getFollowUpFacts();
-  const bestStep = fu.reduce((b, f) => (rate(f.replies, f.sent) > rate(b.replies, b.sent) ? f : b), fu[0]!);
-  insights.push({
-    id: "followup",
-    tone: "insight",
-    title: `Follow-up #${bestStep.step} converts best at ${pct(rate(bestStep.replies, bestStep.sent))}`,
-    body: `Reply rate declines after step ${bestStep.step + 1}. Three touches per prospect is your efficient frontier.`,
-  });
+  const defaultFu = { step: 0, sent: 0, replies: 0, positive: 0 };
+  const bestStep = fu.length > 0
+    ? fu.reduce((b, f) => (rate(f.replies, f.sent) > rate(b.replies, b.sent) ? f : b), fu[0] || defaultFu)
+    : defaultFu;
+  if (bestStep.sent > 0) {
+    insights.push({
+      id: "followup",
+      tone: "insight",
+      title: `Follow-up #${bestStep.step} converts best at ${pct(rate(bestStep.replies, bestStep.sent))}`,
+      body: `Reply rate declines after step ${bestStep.step + 1}. Three touches per prospect is your efficient frontier.`,
+    });
+  }
 
   // Weakest stage
   const weakest = getWeakestStage(getStageConversions(current, previous));

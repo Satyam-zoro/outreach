@@ -43,7 +43,8 @@ export const Route = createFileRoute("/")({
 
 function useSnapshot() {
   const all = getFacts();
-  const cutoff = all[Math.max(0, all.length - 6 * 60)]?.date ?? all[0]!.date;
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const cutoff = (all.length > 0 && all[Math.max(0, all.length - 6 * 60)]?.date) || all[0]?.date || todayStr;
   const facts = all.filter((f) => f.date >= cutoff);
   const totals = sum(facts);
   const prior = sum(all.filter((f) => f.date < cutoff).slice(-facts.length));
