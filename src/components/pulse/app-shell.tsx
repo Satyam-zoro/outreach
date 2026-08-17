@@ -131,55 +131,61 @@ export function AppShell({ children }: { children: ReactNode }) {
         />
       ) : null}
 
-      {/* Sidebar */}
+      {/* Sidebar with buttery-smooth sliding animation */}
       <aside
         className={cn(
-          "h-screen flex w-[232px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground",
-          open ? "fixed inset-y-0 left-0 z-40 lg:static" : "hidden lg:flex"
+          "h-screen shrink-0 flex flex-col bg-sidebar text-sidebar-foreground overflow-hidden",
+          "transition-[width,opacity,border-color] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+          "fixed inset-y-0 left-0 z-40 lg:static",
+          open
+            ? "w-[232px] opacity-100 border-r border-sidebar-border"
+            : "w-0 opacity-0 border-r-0 pointer-events-none"
         )}
       >
-        <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-3 shrink-0">
-          <Wordmark />
-          <button
-            type="button"
-            onClick={toggleSidebar}
-            aria-label="Close navigation"
-            className="grid size-7 place-items-center rounded-md text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-foreground lg:hidden"
-          >
-            <X className="size-4" aria-hidden />
-          </button>
-        </div>
+        <div className="w-[232px] h-full flex flex-col shrink-0">
+          <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-3 shrink-0">
+            <Wordmark />
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              aria-label="Close navigation"
+              className="grid size-7 place-items-center rounded-md text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-foreground lg:hidden"
+            >
+              <X className="size-4" aria-hidden />
+            </button>
+          </div>
 
-        <div className="px-4 py-4 shrink-0">
-          <Button
-            onClick={() => setPaletteOpen(true)}
-            className="w-full justify-center gap-1.5 rounded-full border border-sidebar-border bg-transparent text-sm font-semibold text-sidebar-foreground hover:bg-sidebar-active"
-          >
-            <Plus className="size-4" aria-hidden />
-            New
-          </Button>
-        </div>
+          <div className="px-4 py-4 shrink-0">
+            <Button
+              onClick={() => setPaletteOpen(true)}
+              className="w-full justify-center gap-1.5 rounded-full border border-sidebar-border bg-transparent text-sm font-semibold text-sidebar-foreground hover:bg-sidebar-active"
+            >
+              <Plus className="size-4" aria-hidden />
+              New
+            </Button>
+          </div>
 
-        <SidebarNav
-          pathname={pathname}
-          onNavigate={() => {
-            if (window.matchMedia("(max-width: 1023px)").matches) setOpen(false);
-          }}
-        />
+          <SidebarNav
+            pathname={pathname}
+            onNavigate={() => {
+              if (window.matchMedia("(max-width: 1023px)").matches) setOpen(false);
+            }}
+          />
 
-        <div className="border-t border-sidebar-border p-3 shrink-0">
-          <button
-            type="button"
-            onClick={() => setWorkspace((w) => workspaces[(workspaces.indexOf(w) + 1) % workspaces.length]!)}
-            className="flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-left transition-colors hover:bg-sidebar-active"
-          >
-            <WorkspaceLogo size="sm" editable={false} className="shrink-0" />
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-xs font-medium">{workspace.name}</span>
-              <span className="block text-[11px] text-sidebar-muted">{workspace.plan} workspace</span>
-            </span>
-            <ChevronRight className="size-3.5 shrink-0 text-sidebar-muted" aria-hidden />
-          </button>
+          <div className="border-t border-sidebar-border p-3 shrink-0">
+            <button
+              type="button"
+              onClick={() => setWorkspace((w) => workspaces[(workspaces.indexOf(w) + 1) % workspaces.length]!)}
+              className="flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-left transition-colors hover:bg-sidebar-active"
+            >
+              <WorkspaceLogo size="sm" editable={false} className="shrink-0" />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-xs font-medium">{workspace.name}</span>
+                <span className="block text-[11px] text-sidebar-muted">{workspace.plan} workspace</span>
+              </span>
+              <ChevronRight className="size-3.5 shrink-0 text-sidebar-muted" aria-hidden />
+            </button>
+          </div>
         </div>
       </aside>
 
