@@ -379,6 +379,7 @@ export async function callNotionApi(
     "Content-Type": "application/json",
   };
 
+  const bodyStr = options.body ? JSON.stringify(options.body) : undefined;
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
 
   // 1. Try local/Vercel server proxy (/api/notion)
