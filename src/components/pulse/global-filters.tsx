@@ -10,6 +10,7 @@ import { CHANNELS, type Channel, type LeadSource } from "@/lib/pulse/types";
 import { cn } from "@/lib/utils";
 
 const presets: { id: Exclude<RangePreset, "custom">; label: string }[] = [
+  { id: "all", label: "All time" },
   { id: "today", label: "Today" },
   { id: "7d", label: "7 days" },
   { id: "30d", label: "30 days" },
@@ -17,7 +18,61 @@ const presets: { id: Exclude<RangePreset, "custom">; label: string }[] = [
   { id: "ytd", label: "This year" },
 ];
 
-const SOURCES: LeadSource[] = ["Manual", "Scraped", "Referral", "Inbound", "List Purchase"];
+function parseCreatorSheetRows(key: string): any[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed?.rows)) {
+        return parsed.rows;
+      }
+    }
+  } catch {}
+  return [];
+}
+
+function computeDynamicOptions() {
+  if (typeof window === "undefined") {
+    return {
+      channels: ["Instagram", "YouTube", "TikTok", "X", "Email"],
+      stages: ["Not contacted", "DM sent", "Replied", "In talks", "Closed", "Passed"],
+      niches: ["Fitness", "Finance", "Business", "Tech", "Comedy", "Beauty"],
+      owners: ["Satyam"],
+    };
+  }
+
+  const shortRows = parseCreatorSheetRows("pulse-creator-sheet-short");
+  const longRows = parseCreatorSheetRows("pulse-creator-sheet-long");
+  const allRows = [...shortRows, ...longRows];
+
+  const channelsSet = new Set<string>();
+  const stagesSet = new Set<string>(["Not contacted", "DM sent", "Replied", "In talks", "Closed", "Passed"]);
+  const nichesSet = new Set<string>();
+  const ownersSet = new Set<string>(["Satyam"]);
+
+  allRows.forEach((r) => {
+    const c = r.cells || {};
+    if (c.platform) channelsSet.add(String(c.platform).trim());
+    if (c.stage) stagesSet.add(String(c.stage).trim());
+    if (c.niche) nichesSet.add(String(c.niche).trim());
+    if (c.owner) ownersSet.add(String(c.owner).trim());
+  });
+
+  if (channelsSet.size === 0) {
+    ["Instagram", "YouTube", "TikTok", "X", "Email"].forEach((c) => channelsSet.add(c));
+  }
+  if (nichesSet.size === 0) {
+    ["Fitness", "Finance", "Business", "Tech", "Education"].forEach((n) => nichesSet.add(n));
+  }
+
+  return {
+    channels: Array.from(channelsSet).filter(Boolean),
+    stages: Array.from(stagesSet).filter(Boolean),
+    niches: Array.from(nichesSet).filter(Boolean),
+    owners: Array.from(ownersSet).filter(Boolean),
+  };
+}
 
 export function DateRangeControl() {
   const { filters, preset, setPreset, setRange } = useFilters();
@@ -117,6 +172,7 @@ function FilterSection<T extends string>({
 
 export function FilterControl() {
   const { filters, toggle, clear, activeCount } = useFilters();
+  const options = computeDynamicOptions();
 
   return (
     <Popover>
@@ -131,31 +187,45 @@ export function FilterControl() {
           ) : null}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-80 space-y-3.5">
+      <PopoverContent align="end" className="w-84 max-h-[85vh] overflow-y-auto space-y-4 p-4">
         <FilterSection
-          title="Channel"
-          options={CHANNELS.map((c) => ({ value: c, label: c }))}
-          selected={filters.channels as Channel[]}
-          onToggle={(v) => toggle("channels", v)}
-        />
-        <FilterSection
-          title="Campaign"
-          options={campaigns.map((c) => ({ value: c.id, label: c.name.split(" — ")[0]! }))}
+          title="Format"
+          options={[
+            { value: "c_short", label: "Short-Form" },
+            { value: "c_long", label: "Long-Form" },
+          ]}
           selected={filters.campaignIds}
           onToggle={(v) => toggle("campaignIds", v)}
         />
+
         <FilterSection
-          title="Team member"
-          options={team.map((m) => ({ value: m.id, label: m.name.split(" ")[0]! }))}
+          title="Platform"
+          options={options.channels.map((c) => ({ value: c as Channel, label: c }))}
+          selected={filters.channels as Channel[]}
+          onToggle={(v) => toggle("channels", v)}
+        />
+
+        <FilterSection
+          title="Stage"
+          options={options.stages.map((s) => ({ value: s, label: s }))}
+          selected={filters.stages || []}
+          onToggle={(v) => toggle("stages", v)}
+        />
+
+        <FilterSection
+          title="Niche"
+          options={options.niches.map((n) => ({ value: n, label: n }))}
+          selected={filters.niches || []}
+          onToggle={(v) => toggle("niches", v)}
+        />
+
+        <FilterSection
+          title="Owner"
+          options={options.owners.map((m) => ({ value: `u_${m.toLowerCase().replace(/\s+/g, "_")}`, label: m }))}
           selected={filters.memberIds}
           onToggle={(v) => toggle("memberIds", v)}
         />
-        <FilterSection
-          title="Lead source"
-          options={SOURCES.map((s) => ({ value: s, label: s }))}
-          selected={filters.sources as LeadSource[]}
-          onToggle={(v) => toggle("sources", v)}
-        />
+
         {activeCount > 0 ? (
           <Button variant="ghost" size="sm" className="w-full justify-center gap-2" onClick={clear}>
             <X className="size-3.5" aria-hidden />

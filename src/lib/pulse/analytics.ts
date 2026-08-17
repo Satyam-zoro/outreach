@@ -53,7 +53,9 @@ export function selectFacts(filters: Filters, range?: DateRange): OutreachFact[]
       (filters.channels.length === 0 || filters.channels.includes(f.channel)) &&
       (filters.campaignIds.length === 0 || filters.campaignIds.includes(f.campaignId)) &&
       (filters.memberIds.length === 0 || filters.memberIds.includes(f.memberId)) &&
-      (filters.sources.length === 0 || filters.sources.includes(f.source)),
+      (filters.sources.length === 0 || filters.sources.includes(f.source)) &&
+      (!filters.stages || filters.stages.length === 0 || (f.stage && filters.stages.includes(f.stage))) &&
+      (!filters.niches || filters.niches.length === 0 || (f.niche && filters.niches.includes(f.niche))),
   );
 }
 

@@ -46,23 +46,11 @@ export const currentUser: TeamMember = {
   initials: "SA",
 };
 
-export const team: TeamMember[] = [
-  { id: "u_alex", name: "Alex Moreau", role: "Senior SDR", initials: "AM" },
-  currentUser,
-  { id: "u_rahul", name: "Rahul Verma", role: "SDR", initials: "RV" },
-  { id: "u_maya", name: "Maya Chen", role: "Account Exec", initials: "MC" },
-  { id: "u_dan", name: "Dan Okafor", role: "SDR", initials: "DO" },
-];
+export const team: TeamMember[] = [currentUser];
 
 export const campaigns: Campaign[] = [
   { id: "c_short", name: "Short-Form Creators", channel: "Instagram", status: "Active", startDate: "2026-08-01", cost: 0 },
   { id: "c_long", name: "Long-Form Creators", channel: "YouTube", status: "Active", startDate: "2026-08-01", cost: 0 },
-  { id: "c_hvac", name: "HVAC Outreach — August", channel: "Instagram", status: "Active", startDate: "2026-08-01", cost: 1800 },
-  { id: "c_saas", name: "SaaS Founders Q3", channel: "LinkedIn", status: "Active", startDate: "2026-07-05", cost: 3400 },
-  { id: "c_agency", name: "Agency Partnerships", channel: "Email", status: "Active", startDate: "2026-06-12", cost: 2600 },
-  { id: "c_ecom", name: "Ecom Scale-ups", channel: "Instagram", status: "Paused", startDate: "2026-05-20", cost: 1500 },
-  { id: "c_local", name: "Local Services Blitz", channel: "WhatsApp", status: "Active", startDate: "2026-07-22", cost: 900 },
-  { id: "c_x", name: "X Founder Replies", channel: "X", status: "Completed", startDate: "2026-04-10", cost: 700 },
 ];
 
 const SOURCES: LeadSource[] = ["Manual", "Scraped", "Referral", "Inbound", "List Purchase"];
@@ -99,9 +87,11 @@ export function buildFactsFromCreatorSheets(): OutreachFact[] {
     const platformStr = String(cells.platform || (kind === "short" ? "Instagram" : "YouTube"));
 
     let channel: Channel = "Instagram";
-    if (platformStr.includes("YouTube") || platformStr.includes("Podcast") || platformStr.includes("Twitch") || platformStr.includes("Newsletter")) {
-      channel = "Email";
-    } else if (platformStr.includes("TikTok") || platformStr.includes("Instagram") || platformStr.includes("Reels")) {
+    if (platformStr.includes("YouTube")) {
+      channel = "YouTube";
+    } else if (platformStr.includes("TikTok")) {
+      channel = "TikTok";
+    } else if (platformStr.includes("Instagram") || platformStr.includes("Reels")) {
       channel = "Instagram";
     } else if (platformStr.includes("LinkedIn")) {
       channel = "LinkedIn";
@@ -109,13 +99,17 @@ export function buildFactsFromCreatorSheets(): OutreachFact[] {
       channel = "X";
     } else if (platformStr.includes("WhatsApp")) {
       channel = "WhatsApp";
+    } else if (platformStr.includes("Podcast") || platformStr.includes("Newsletter") || platformStr.includes("Twitch")) {
+      channel = "Podcast";
+    } else if (platformStr.includes("Email")) {
+      channel = "Email";
     } else {
       channel = "Other";
     }
 
     const campaignId = kind === "short" ? "c_short" : "c_long";
-    const rawOwner = String(cells.owner || "Satyam").toLowerCase();
-    const member = team.find((m) => m.name.toLowerCase() === rawOwner || m.id.toLowerCase().includes(rawOwner)) || currentUser;
+    const rawOwner = String(cells.owner || "Satyam").trim();
+    const memberId = rawOwner ? `u_${rawOwner.toLowerCase().replace(/\s+/g, "_")}` : "u_satyam";
 
     const date = typeof cells.lastTouch === "string" && /^\d{4}-\d{2}-\d{2}$/.test(cells.lastTouch)
       ? cells.lastTouch
@@ -125,22 +119,26 @@ export function buildFactsFromCreatorSheets(): OutreachFact[] {
     const replied = Boolean(cells.replied || cells.stage === "Replied" || cells.stage === "In talks" || cells.stage === "Closed");
     const isClosed = Boolean(cells.closed || cells.stage === "Closed");
     const dealValue = isClosed ? (Number(cells.dealValue) || 0) : 0;
+    const stage = String(cells.stage || "Not contacted");
+    const niche = String(cells.niche || "");
 
     facts.push({
       date,
       channel,
       campaignId,
-      memberId: member.id,
+      memberId,
       source: "Manual",
+      stage,
+      niche,
       contacted: 1,
-      dms: channel === "Email" ? 0 : 1,
-      emails: channel === "Email" ? 1 : 0,
-      followUps: cells.stage === "In talks" ? 1 : 0,
+      dms: (channel === "Instagram" || channel === "TikTok" || channel === "X" || channel === "WhatsApp") ? 1 : 0,
+      emails: (channel === "Email" || channel === "YouTube" || channel === "Podcast") ? 1 : 0,
+      followUps: (stage === "In talks" || stage === "Closed") ? 1 : 0,
       replies: replied ? 1 : 0,
       positive: replied ? 1 : 0,
-      negative: cells.stage === "Passed" ? 1 : 0,
-      interested: (cells.stage === "In talks" || isClosed) ? 1 : 0,
-      calls: (cells.stage === "In talks" || isClosed) ? 1 : 0,
+      negative: stage === "Passed" ? 1 : 0,
+      interested: (stage === "In talks" || isClosed) ? 1 : 0,
+      calls: (stage === "In talks" || isClosed) ? 1 : 0,
       deals: isClosed ? 1 : 0,
       revenue: dealValue,
     });

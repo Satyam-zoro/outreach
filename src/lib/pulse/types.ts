@@ -5,9 +5,28 @@
  * touching UI code.
  */
 
-export type Channel = "Instagram" | "Email" | "LinkedIn" | "X" | "WhatsApp" | "Other";
+export type Channel =
+  | "Instagram"
+  | "YouTube"
+  | "TikTok"
+  | "Email"
+  | "LinkedIn"
+  | "X"
+  | "WhatsApp"
+  | "Podcast"
+  | "Other";
 
-export const CHANNELS: Channel[] = ["Instagram", "Email", "LinkedIn", "X", "WhatsApp", "Other"];
+export const CHANNELS: Channel[] = [
+  "Instagram",
+  "YouTube",
+  "TikTok",
+  "Email",
+  "LinkedIn",
+  "X",
+  "WhatsApp",
+  "Podcast",
+  "Other",
+];
 
 export type LeadStatus =
   | "New"
@@ -68,10 +87,13 @@ export interface Lead {
   ownerId: string;
   source: LeadSource;
   location: string;
+  score: number;
   value: number;
   lastContact: string;
-  lastReply: string | null;
-  createdAt: string;
+  touchpoints: number;
+  nextStep: string;
+  niche?: string;
+  platform?: string;
 }
 
 export type ActivityKind =
@@ -85,11 +107,13 @@ export type ActivityKind =
 
 export interface ActivityEvent {
   id: string;
-  leadId: string;
-  kind: ActivityKind;
-  label: string;
-  detail?: string;
-  at: string;
+  timestamp: string;
+  channel: Channel;
+  type: "dm_sent" | "email_sent" | "reply" | "call_booked" | "deal_won";
+  leadName: string;
+  leadCompany: string;
+  memberName: string;
+  metadata?: string;
 }
 
 /** One aggregated activity row: a single day, channel, campaign and owner. */
@@ -99,6 +123,8 @@ export interface OutreachFact {
   campaignId: string;
   memberId: string;
   source: LeadSource;
+  stage?: string;
+  niche?: string;
   contacted: number;
   dms: number;
   emails: number;
@@ -141,6 +167,8 @@ export interface Filters {
   memberIds: string[];
   sources: LeadSource[];
   statuses: LeadStatus[];
+  stages?: string[];
+  niches?: string[];
 }
 
 export interface Totals {
