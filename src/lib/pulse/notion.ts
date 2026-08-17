@@ -381,7 +381,7 @@ export async function callNotionApi(
 
   const bodyStr = options.body ? JSON.stringify(options.body) : undefined;
 
-  // 1. Try local server proxy (/api/notion)
+  // 1. Try local/Vercel server proxy (/api/notion)
   try {
     const res = await fetch(`/api/notion${path}`, {
       method: options.method,
@@ -393,7 +393,7 @@ export async function callNotionApi(
       return { ok: true, status: res.status, data };
     }
     const errText = await res.text();
-    if (res.status !== 404) {
+    if (res.status !== 404 && res.status !== 405) {
       return { ok: false, status: res.status, errorText: errText };
     }
   } catch {}
@@ -413,9 +413,24 @@ export async function callNotionApi(
     return { ok: false, status: res.status, errorText: errText };
   } catch {}
 
-  // 3. Proxy fallback
+  // 3. CORS Proxy Fallback #1
   try {
     const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(`https://api.notion.com/v1${path}`)}`;
+    const res = await fetch(proxyUrl, {
+      method: options.method,
+      headers,
+      body: bodyStr,
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return { ok: true, status: res.status, data };
+    }
+  } catch {}
+
+  // 4. CORS Proxy Fallback #2
+  try {
+    const target = `https://api.notion.com/v1${path}`;
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(target)}`;
     const res = await fetch(proxyUrl, {
       method: options.method,
       headers,
@@ -519,6 +534,9 @@ export async function syncNotionDatabases(config: NotionConfig): Promise<{ short
   let shortRows: SheetRow[] = [];
   let longRows: SheetRow[] = [];
 
+  let shortError: string | null = null;
+  let longError: string | null = null;
+
   // 1. Sync Short-Form DB if specified
   if (config.shortDbId) {
     try {
@@ -534,7 +552,8 @@ export async function syncNotionDatabases(config: NotionConfig): Promise<{ short
         localStorage.setItem("pulse-creator-sheet-short", JSON.stringify(sheetData));
       }
     } catch (err: any) {
-      console.warn("Short-Form DB sync error:", err);
+      console.error("Short-Form DB sync error:", err);
+      shortError = err.message || String(err);
     }
   }
 
@@ -553,8 +572,13 @@ export async function syncNotionDatabases(config: NotionConfig): Promise<{ short
         localStorage.setItem("pulse-creator-sheet-long", JSON.stringify(sheetData));
       }
     } catch (err: any) {
-      console.warn("Long-Form DB sync error:", err);
+      console.error("Long-Form DB sync error:", err);
+      longError = err.message || String(err);
     }
+  }
+
+  if (shortError && longError) {
+    throw new Error(`Sync failed. Short-Form: ${shortError}. Long-Form: ${longError}`);
   }
 
   // 3. Combine both into master leads list for /leads and /dashboard
