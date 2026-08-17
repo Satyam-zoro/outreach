@@ -2,8 +2,8 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
-      "source": "/api/notion/(.*)",
-      "destination": "https://api.notion.com/v1/$1"
+      "source": "/api/notion/:match*",
+      "destination": "https://api.notion.com/v1/:match*"
     }
   ]
 }

@@ -379,11 +379,11 @@ export async function callNotionApi(
     "Content-Type": "application/json",
   };
 
-  const bodyStr = options.body ? JSON.stringify(options.body) : undefined;
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
 
   // 1. Try local/Vercel server proxy (/api/notion)
   try {
-    const res = await fetch(`/api/notion${path}`, {
+    const res = await fetch(`/api/notion${normalizedPath}`, {
       method: options.method,
       headers,
       body: bodyStr,
@@ -400,7 +400,7 @@ export async function callNotionApi(
 
   // 2. Direct Notion API
   try {
-    const res = await fetch(`https://api.notion.com/v1${path}`, {
+    const res = await fetch(`https://api.notion.com/v1${normalizedPath}`, {
       method: options.method,
       headers,
       body: bodyStr,
@@ -415,7 +415,7 @@ export async function callNotionApi(
 
   // 3. CORS Proxy Fallback #1
   try {
-    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(`https://api.notion.com/v1${path}`)}`;
+    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(`https://api.notion.com/v1${normalizedPath}`)}`;
     const res = await fetch(proxyUrl, {
       method: options.method,
       headers,
@@ -429,7 +429,7 @@ export async function callNotionApi(
 
   // 4. CORS Proxy Fallback #2
   try {
-    const target = `https://api.notion.com/v1${path}`;
+    const target = `https://api.notion.com/v1${normalizedPath}`;
     const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(target)}`;
     const res = await fetch(proxyUrl, {
       method: options.method,
