@@ -87,13 +87,15 @@ export interface Lead {
   ownerId: string;
   source: LeadSource;
   location: string;
-  score: number;
   value: number;
   lastContact: string;
-  touchpoints: number;
-  nextStep: string;
-  niche?: string;
-  platform?: string;
+  score?: number | undefined;
+  touchpoints?: number | undefined;
+  nextStep?: string | undefined;
+  lastReply?: string | undefined;
+  createdAt?: string | undefined;
+  niche?: string | undefined;
+  platform?: string | undefined;
 }
 
 export type ActivityKind =
@@ -107,13 +109,18 @@ export type ActivityKind =
 
 export interface ActivityEvent {
   id: string;
-  timestamp: string;
-  channel: Channel;
-  type: "dm_sent" | "email_sent" | "reply" | "call_booked" | "deal_won";
-  leadName: string;
-  leadCompany: string;
-  memberName: string;
-  metadata?: string;
+  leadId?: string | undefined;
+  kind: ActivityKind;
+  label: string;
+  detail?: string | undefined;
+  at: string;
+  timestamp?: string | undefined;
+  channel?: Channel | undefined;
+  type?: "dm_sent" | "email_sent" | "reply" | "call_booked" | "deal_won" | undefined;
+  leadName?: string | undefined;
+  leadCompany?: string | undefined;
+  memberName?: string | undefined;
+  metadata?: string | undefined;
 }
 
 /** One aggregated activity row: a single day, channel, campaign and owner. */

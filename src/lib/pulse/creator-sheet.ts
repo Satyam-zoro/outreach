@@ -184,6 +184,9 @@ export function useCreatorSheet(kind: SheetKind) {
       }
     }
     window.localStorage.setItem(storageKey(kind), JSON.stringify(data));
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("pulse-notion-synced"));
+    }
   }, [data, hydrated, kind]);
 
   const reloadFromStorage = useCallback(() => {
@@ -380,7 +383,7 @@ export function useCreatorSheet(kind: SheetKind) {
     if (!sourceRow) return;
 
     const nextRank = data.rows.length + 1;
-    const duplicatedCells = { ...sourceRow.cells, "#": nextRank, creator: `${sourceRow.cells.creator || "Creator"} (Copy)` };
+    const duplicatedCells = { ...sourceRow.cells, "#": nextRank, creator: `${sourceRow.cells["creator"] || "Creator"} (Copy)` };
 
     const notionPageId = await createNotionPage(kind, duplicatedCells, nextRank);
     const newId = notionPageId || uid();

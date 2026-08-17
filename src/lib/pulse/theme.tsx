@@ -11,11 +11,18 @@ function apply(theme: Theme) {
 }
 
 export function useTheme() {
-  const [theme, setTheme] = useState<Theme>("light");
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window !== "undefined") {
+      const stored = window.localStorage.getItem(KEY);
+      if (stored === "light_explicit") return "light";
+      return "dark";
+    }
+    return "dark";
+  });
 
   useEffect(() => {
     const stored = window.localStorage.getItem(KEY);
-    const next: Theme = stored === "dark" ? "dark" : "light";
+    const next: Theme = stored === "light_explicit" ? "light" : "dark";
     setTheme(next);
     apply(next);
   }, []);
@@ -23,7 +30,7 @@ export function useTheme() {
   const toggle = useCallback(() => {
     setTheme((current) => {
       const next: Theme = current === "dark" ? "light" : "dark";
-      window.localStorage.setItem(KEY, next);
+      window.localStorage.setItem(KEY, next === "light" ? "light_explicit" : "dark");
       apply(next);
       return next;
     });

@@ -32,20 +32,20 @@ const STORAGE_KEY_LEADS = "pulse_notion_leads";
 const STORAGE_KEY_LAST_SYNC = "pulse_notion_last_sync";
 
 export const DEFAULT_NOTION_API_KEY =
-  (typeof import.meta !== "undefined" && (import.meta.env?.VITE_NOTION_API_KEY || import.meta.env?.NOTION_TOKEN)) ||
+  (typeof import.meta !== "undefined" && (import.meta.env?.["VITE_NOTION_API_KEY"] || import.meta.env?.["NOTION_TOKEN"])) ||
   "";
 export const DEFAULT_SHORT_DB_ID =
-  (typeof import.meta !== "undefined" && (import.meta.env?.VITE_NOTION_SHORT_DB_ID || import.meta.env?.NOTION_SHORT_DB_ID)) ||
+  (typeof import.meta !== "undefined" && (import.meta.env?.["VITE_NOTION_SHORT_DB_ID"] || import.meta.env?.["NOTION_SHORT_DB_ID"])) ||
   "";
 export const DEFAULT_LONG_DB_ID =
-  (typeof import.meta !== "undefined" && (import.meta.env?.VITE_NOTION_LONG_DB_ID || import.meta.env?.NOTION_LONG_DB_ID)) ||
+  (typeof import.meta !== "undefined" && (import.meta.env?.["VITE_NOTION_LONG_DB_ID"] || import.meta.env?.["NOTION_LONG_DB_ID"])) ||
   "";
 
 export function extractNotionDatabaseId(input: string): string {
   if (!input) return "";
   const trimmed = input.trim();
   const match = trimmed.match(/([a-f0-9]{32})/i) || trimmed.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i);
-  const rawId = match ? match[1].replace(/-/g, "") : trimmed.replace(/-/g, "");
+  const rawId = (match && match[1]) ? match[1].replace(/-/g, "") : trimmed.replace(/-/g, "");
   if (rawId.length === 32) {
     return `${rawId.slice(0, 8)}-${rawId.slice(8, 12)}-${rawId.slice(12, 16)}-${rawId.slice(16, 20)}-${rawId.slice(20)}`;
   }
@@ -390,7 +390,7 @@ export async function callNotionApi(
     const res = await fetch(`/api/notion?path=${encodeURIComponent(normalizedPath)}`, {
       method: options.method,
       headers,
-      body: bodyStr,
+      body: bodyStr || null,
     });
     if (res.ok) {
       const data = await res.json();
@@ -407,7 +407,7 @@ export async function callNotionApi(
     const res = await fetch(`/api/notion${normalizedPath}`, {
       method: options.method,
       headers,
-      body: bodyStr,
+      body: bodyStr || null,
     });
     if (res.ok) {
       const data = await res.json();
@@ -424,7 +424,7 @@ export async function callNotionApi(
     const res = await fetch(`https://api.notion.com/v1${normalizedPath}`, {
       method: options.method,
       headers,
-      body: bodyStr,
+      body: bodyStr || null,
     });
     if (res.ok) {
       const data = await res.json();
@@ -440,7 +440,7 @@ export async function callNotionApi(
     const res = await fetch(proxyUrl, {
       method: options.method,
       headers,
-      body: bodyStr,
+      body: bodyStr || null,
     });
     if (res.ok) {
       const data = await res.json();
@@ -455,7 +455,7 @@ export async function callNotionApi(
     const res = await fetch(proxyUrl, {
       method: options.method,
       headers,
-      body: bodyStr,
+      body: bodyStr || null,
     });
     if (res.ok) {
       const data = await res.json();
@@ -683,19 +683,19 @@ export async function createNotionPage(
   const existingProps = getRes.ok ? getRes.data?.properties || {} : {};
   const titleKey = Object.keys(existingProps).find((k) => existingProps[k]?.type === "title") || "Name";
 
-  const creatorName = String(initialCells?.creator || "New Creator");
-  const handleVal = String(initialCells?.handle || "@newcreator");
-  const platformVal = String(initialCells?.platform || (kind === "short" ? "Instagram" : "YouTube"));
-  const nicheVal = String(initialCells?.niche || (kind === "short" ? "Fitness" : "Business"));
-  const followersVal = Number(initialCells?.followers || 100000);
-  const stageVal = String(initialCells?.stage || "Not contacted");
-  const dmSentVal = Boolean(initialCells?.dmSent);
-  const repliedVal = Boolean(initialCells?.replied);
-  const closedVal = Boolean(initialCells?.closed);
-  const dealVal = Number(initialCells?.dealValue || 0);
-  const lastTouchVal = String(initialCells?.lastTouch || new Date().toISOString().slice(0, 10));
-  const ownerVal = String(initialCells?.owner || "Satyam");
-  const notesVal = String(initialCells?.notes || "");
+  const creatorName = String(initialCells?.["creator"] || "New Creator");
+  const handleVal = String(initialCells?.["handle"] || "@newcreator");
+  const platformVal = String(initialCells?.["platform"] || (kind === "short" ? "Instagram" : "YouTube"));
+  const nicheVal = String(initialCells?.["niche"] || (kind === "short" ? "Fitness" : "Business"));
+  const followersVal = Number(initialCells?.["followers"] || 100000);
+  const stageVal = String(initialCells?.["stage"] || "Not contacted");
+  const dmSentVal = Boolean(initialCells?.["dmSent"]);
+  const repliedVal = Boolean(initialCells?.["replied"]);
+  const closedVal = Boolean(initialCells?.["closed"]);
+  const dealVal = Number(initialCells?.["dealValue"] || 0);
+  const lastTouchVal = String(initialCells?.["lastTouch"] || new Date().toISOString().slice(0, 10));
+  const ownerVal = String(initialCells?.["owner"] || "Satyam");
+  const notesVal = String(initialCells?.["notes"] || "");
 
   const propertiesPayload: Record<string, any> = {};
 
@@ -704,20 +704,20 @@ export async function createNotionPage(
   if (isTitleHandle) {
     // Handle is the title property in Notion
     propertiesPayload[titleKey] = { title: [{ text: { content: handleVal } }] };
-    if (existingProps.Creator?.type === "rich_text") {
-      propertiesPayload.Creator = { rich_text: [{ text: { content: creatorName } }] };
+    if (existingProps["Creator"]?.type === "rich_text") {
+      propertiesPayload["Creator"] = { rich_text: [{ text: { content: creatorName } }] };
     }
-    if (existingProps.Name?.type === "rich_text") {
-      propertiesPayload.Name = { rich_text: [{ text: { content: creatorName } }] };
+    if (existingProps["Name"]?.type === "rich_text") {
+      propertiesPayload["Name"] = { rich_text: [{ text: { content: creatorName } }] };
     }
   } else {
     // Creator/Name is the title property in Notion
     propertiesPayload[titleKey] = { title: [{ text: { content: creatorName } }] };
-    if (existingProps.Creator?.type === "rich_text" && titleKey !== "Creator") {
-      propertiesPayload.Creator = { rich_text: [{ text: { content: creatorName } }] };
+    if (existingProps["Creator"]?.type === "rich_text" && titleKey !== "Creator") {
+      propertiesPayload["Creator"] = { rich_text: [{ text: { content: creatorName } }] };
     }
-    if (existingProps.Handle?.type === "rich_text") {
-      propertiesPayload.Handle = { rich_text: [{ text: { content: handleVal } }] };
+    if (existingProps["Handle"]?.type === "rich_text") {
+      propertiesPayload["Handle"] = { rich_text: [{ text: { content: handleVal } }] };
     } else if (existingProps["Social Handle"]?.type === "rich_text") {
       propertiesPayload["Social Handle"] = { rich_text: [{ text: { content: handleVal } }] };
     }
@@ -736,68 +736,68 @@ export async function createNotionPage(
     }
   }
 
-  if (existingProps.Platform?.type === "select") {
-    propertiesPayload.Platform = { select: { name: platformVal } };
-  } else if (existingProps.Channel?.type === "select") {
-    propertiesPayload.Channel = { select: { name: platformVal } };
+  if (existingProps["Platform"]?.type === "select") {
+    propertiesPayload["Platform"] = { select: { name: platformVal } };
+  } else if (existingProps["Channel"]?.type === "select") {
+    propertiesPayload["Channel"] = { select: { name: platformVal } };
   }
 
-  if (existingProps.Niche?.type === "select") {
-    propertiesPayload.Niche = { select: { name: nicheVal } };
-  } else if (existingProps.Category?.type === "select") {
-    propertiesPayload.Category = { select: { name: nicheVal } };
+  if (existingProps["Niche"]?.type === "select") {
+    propertiesPayload["Niche"] = { select: { name: nicheVal } };
+  } else if (existingProps["Category"]?.type === "select") {
+    propertiesPayload["Category"] = { select: { name: nicheVal } };
   }
 
-  if (existingProps.Stage) {
-    if (existingProps.Stage.type === "status") {
-      propertiesPayload.Stage = { status: { name: stageVal } };
-    } else if (existingProps.Stage.type === "select") {
-      propertiesPayload.Stage = { select: { name: stageVal } };
+  if (existingProps["Stage"]) {
+    if (existingProps["Stage"].type === "status") {
+      propertiesPayload["Stage"] = { status: { name: stageVal } };
+    } else if (existingProps["Stage"].type === "select") {
+      propertiesPayload["Stage"] = { select: { name: stageVal } };
     }
-  } else if (existingProps.Status) {
-    if (existingProps.Status.type === "status") {
-      propertiesPayload.Status = { status: { name: stageVal } };
-    } else if (existingProps.Status.type === "select") {
-      propertiesPayload.Status = { select: { name: stageVal } };
+  } else if (existingProps["Status"]) {
+    if (existingProps["Status"].type === "status") {
+      propertiesPayload["Status"] = { status: { name: stageVal } };
+    } else if (existingProps["Status"].type === "select") {
+      propertiesPayload["Status"] = { select: { name: stageVal } };
     }
   }
 
-  if (existingProps.Followers?.type === "number") {
-    propertiesPayload.Followers = { number: followersVal };
-  } else if (existingProps.Subscribers?.type === "number") {
-    propertiesPayload.Subscribers = { number: followersVal };
+  if (existingProps["Followers"]?.type === "number") {
+    propertiesPayload["Followers"] = { number: followersVal };
+  } else if (existingProps["Subscribers"]?.type === "number") {
+    propertiesPayload["Subscribers"] = { number: followersVal };
   }
 
   if (existingProps["DM'd"]?.type === "checkbox") {
     propertiesPayload["DM'd"] = { checkbox: dmSentVal };
   }
-  if (existingProps.Replied?.type === "checkbox") {
-    propertiesPayload.Replied = { checkbox: repliedVal };
+  if (existingProps["Replied"]?.type === "checkbox") {
+    propertiesPayload["Replied"] = { checkbox: repliedVal };
   }
-  if (existingProps.Closed?.type === "checkbox") {
-    propertiesPayload.Closed = { checkbox: closedVal };
+  if (existingProps["Closed"]?.type === "checkbox") {
+    propertiesPayload["Closed"] = { checkbox: closedVal };
   }
 
   if (existingProps["Deal ($)"]?.type === "number") {
     propertiesPayload["Deal ($)"] = { number: dealVal };
-  } else if (existingProps.Deal?.type === "number") {
-    propertiesPayload.Deal = { number: dealVal };
-  } else if (existingProps.Value?.type === "number") {
-    propertiesPayload.Value = { number: dealVal };
+  } else if (existingProps["Deal"]?.type === "number") {
+    propertiesPayload["Deal"] = { number: dealVal };
+  } else if (existingProps["Value"]?.type === "number") {
+    propertiesPayload["Value"] = { number: dealVal };
   }
 
   if (existingProps["Last touch"]?.type === "date") {
     propertiesPayload["Last touch"] = { date: { start: lastTouchVal } };
-  } else if (existingProps.Date?.type === "date") {
-    propertiesPayload.Date = { date: { start: lastTouchVal } };
+  } else if (existingProps["Date"]?.type === "date") {
+    propertiesPayload["Date"] = { date: { start: lastTouchVal } };
   }
 
-  if (existingProps.Owner?.type === "rich_text") {
-    propertiesPayload.Owner = { rich_text: [{ text: { content: ownerVal } }] };
+  if (existingProps["Owner"]?.type === "rich_text") {
+    propertiesPayload["Owner"] = { rich_text: [{ text: { content: ownerVal } }] };
   }
 
-  if (notesVal && existingProps.Notes?.type === "rich_text") {
-    propertiesPayload.Notes = { rich_text: [{ text: { content: notesVal } }] };
+  if (notesVal && existingProps["Notes"]?.type === "rich_text") {
+    propertiesPayload["Notes"] = { rich_text: [{ text: { content: notesVal } }] };
   }
 
   const res = await callNotionApi("/pages", {
@@ -1031,7 +1031,12 @@ export async function alignNotionDatabaseSchemas(
     longError = res.error;
   }
 
-  return { shortSuccess, longSuccess, shortError, longError };
+  return {
+    shortSuccess,
+    longSuccess,
+    ...(shortError ? { shortError } : {}),
+    ...(longError ? { longError } : {}),
+  };
 }
 
 /**

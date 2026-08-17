@@ -131,9 +131,9 @@ export function buildFactsFromCreatorSheets(): OutreachFact[] {
       source: "Manual",
       stage,
       niche,
-      contacted: 1,
-      dms: (channel === "Instagram" || channel === "TikTok" || channel === "X" || channel === "WhatsApp") ? 1 : 0,
-      emails: (channel === "Email" || channel === "YouTube" || channel === "Podcast") ? 1 : 0,
+      contacted: dmSent ? 1 : 0,
+      dms: (dmSent && (channel === "Instagram" || channel === "TikTok" || channel === "X" || channel === "WhatsApp")) ? 1 : 0,
+      emails: (dmSent && (channel === "Email" || channel === "YouTube" || channel === "Podcast" || channel === "LinkedIn" || channel === "Other")) ? 1 : 0,
       followUps: (stage === "In talks" || stage === "Closed") ? 1 : 0,
       replies: replied ? 1 : 0,
       positive: replied ? 1 : 0,
@@ -286,8 +286,11 @@ function buildLeads(): Lead[] {
       source: pick(r, SOURCES),
       location: pick(r, CITY),
       value: [1200, 1800, 2400, 3200, 4800, 6400][Math.floor(r() * 6)]!,
+      score: Math.floor(r() * 50) + 50,
+      touchpoints: Math.floor(r() * 4) + 1,
+      nextStep: status === "Won" ? "Onboarding" : status === "Lost" ? "Archive" : "Follow up",
       lastContact: iso(contact),
-      lastReply: replied ? iso(reply) : null,
+      lastReply: replied ? iso(reply) : undefined,
       createdAt: iso(created),
     });
   }
@@ -328,7 +331,7 @@ export function getLeadActivity(leadId: string): ActivityEvent[] {
   if (!lead) return [];
   const r = rng(Number(leadId.replace(/\D/g, "")) + 91);
   const events: ActivityEvent[] = [
-    { id: `${leadId}_a0`, leadId, kind: "note", label: "Lead added", detail: `Source: ${lead.source}`, at: lead.createdAt },
+    { id: `${leadId}_a0`, leadId, kind: "note", label: "Lead added", detail: `Source: ${lead.source}`, at: lead.createdAt || lead.lastContact },
     {
       id: `${leadId}_a1`,
       leadId,

@@ -124,13 +124,21 @@ export function useFilters(): FiltersContextValue {
   return ctx;
 }
 
-/** Derived analytics for the current filter selection. */
+export type AnalyticsStatus = "loading" | "success" | "empty" | "error";
+
+/** Derived analytics for the current filter selection with strict lifecycle states. */
 export function useAnalytics() {
   const { filters, granularity } = useFilters();
   const [version, setVersion] = useState(0);
+  const [hydrated, setHydrated] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    const handleUpdate = () => setVersion((v) => v + 1);
+    setHydrated(true);
+    const handleUpdate = () => {
+      setError(null);
+      setVersion((v) => v + 1);
+    };
     window.addEventListener("pulse-notion-synced", handleUpdate);
     window.addEventListener("storage", handleUpdate);
     return () => {
@@ -140,22 +148,96 @@ export function useAnalytics() {
   }, []);
 
   return useMemo(() => {
-    const facts = selectFacts(filters);
-    const prevFacts = selectFacts(filters, previousRange(filters.range));
-    const totals = sum(facts);
-    const previousTotals = sum(prevFacts);
-    return {
-      filters,
-      granularity,
-      facts,
-      prevFacts,
-      totals,
-      previousTotals,
-      funnel: getFunnel(totals, previousTotals),
-      insights: getInsights(filters),
-      hasData: facts.length > 0 && totals.contacted > 0,
-    };
-  }, [filters, granularity, version]);
+    try {
+      const facts = selectFacts(filters);
+      const prevFacts = selectFacts(filters, previousRange(filters.range));
+      const totals = sum(facts);
+      const previousTotals = sum(prevFacts);
+      const hasData = facts.length > 0 && totals.contacted > 0;
+
+      const status: AnalyticsStatus = !hydrated
+        ? "loading"
+        : error
+          ? "error"
+          : hasData
+            ? "success"
+            : "empty";
+
+      return {
+        filters,
+        granularity,
+        facts,
+        prevFacts,
+        totals,
+        previousTotals,
+        funnel: getFunnel(totals, previousTotals),
+        insights: getInsights(filters),
+        hasData,
+        hydrated,
+        status,
+        isLoading: !hydrated,
+        isSuccess: hydrated && !error && hasData,
+        isEmpty: hydrated && !error && !hasData,
+        isError: !!error,
+        error,
+        retry: () => {
+          setError(null);
+          setVersion((v) => v + 1);
+        },
+      };
+    } catch (err) {
+      return {
+        filters,
+        granularity,
+        facts: [],
+        prevFacts: [],
+        totals: {
+          contacted: 0,
+          dms: 0,
+          emails: 0,
+          followUps: 0,
+          replies: 0,
+          positive: 0,
+          negative: 0,
+          interested: 0,
+          calls: 0,
+          deals: 0,
+          revenue: 0,
+        },
+        previousTotals: {
+          contacted: 0,
+          dms: 0,
+          emails: 0,
+          followUps: 0,
+          replies: 0,
+          positive: 0,
+          negative: 0,
+          interested: 0,
+          calls: 0,
+          deals: 0,
+          revenue: 0,
+        },
+        funnel: getFunnel(
+          { contacted: 0, dms: 0, emails: 0, followUps: 0, replies: 0, positive: 0, negative: 0, interested: 0, calls: 0, deals: 0, revenue: 0 },
+          { contacted: 0, dms: 0, emails: 0, followUps: 0, replies: 0, positive: 0, negative: 0, interested: 0, calls: 0, deals: 0, revenue: 0 }
+        ),
+        insights: [],
+        hasData: false,
+        hydrated,
+        status: "error" as AnalyticsStatus,
+        isLoading: false,
+        isSuccess: false,
+        isEmpty: false,
+        isError: true,
+        error: err instanceof Error ? err : new Error(String(err)),
+        retry: () => {
+          setError(null);
+          setVersion((v) => v + 1);
+        },
+      };
+    }
+  }, [filters, granularity, version, hydrated, error]);
 }
 
 export type { Channel, LeadSource, LeadStatus };
+

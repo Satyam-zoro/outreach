@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_shell/creators/long")({
 
 function LongFormPage() {
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 animate-fade-in">
       <header>
         <h2 className="text-2xl font-semibold tracking-tight">Long-form creators</h2>
         <p className="mt-1 text-sm text-muted-foreground">

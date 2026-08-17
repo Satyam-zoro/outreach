@@ -74,7 +74,7 @@ export default {
           "Content-Type": "application/json",
         };
 
-        const bodyData = ["GET", "HEAD"].includes(request.method) ? undefined : await request.text();
+        const bodyData = ["GET", "HEAD"].includes(request.method) ? null : await request.text();
 
         const notionRes = await fetch(targetUrl, {
           method: request.method,

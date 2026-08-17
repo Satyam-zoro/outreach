@@ -38,7 +38,7 @@ function Wordmark() {
 
 function SidebarNav({ pathname, onNavigate }: { pathname: string; onNavigate: () => void }) {
   return (
-    <nav className="flex-1 overflow-y-auto pb-6" aria-label="Main">
+    <nav className="flex-1 sidebar-scroll pb-6" aria-label="Main">
       {navGroups.map((group, gi) => (
         <div key={group.heading ?? gi} className="py-1">
           {group.heading ? (
@@ -72,7 +72,7 @@ function SidebarNav({ pathname, onNavigate }: { pathname: string; onNavigate: ()
                   aria-hidden
                 />
                 {active ? (
-                  <span className="absolute inset-y-0 left-0 w-[3px] bg-primary" aria-hidden />
+                  <span className="absolute inset-y-0 left-0 w-[3px] rounded-r bg-primary animate-nav-indicator" aria-hidden />
                 ) : null}
               </Link>
             );
@@ -113,7 +113,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="flex h-screen overflow-hidden bg-background">
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-primary focus:px-3 focus:py-1.5 focus:text-sm focus:text-primary-foreground"
@@ -134,11 +134,11 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-[232px] flex-col bg-sidebar text-sidebar-foreground transition-transform duration-200 ease-out",
-          open ? "translate-x-0" : "-translate-x-full",
+          "h-screen flex w-[232px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground",
+          open ? "fixed inset-y-0 left-0 z-40 lg:static" : "hidden lg:flex"
         )}
       >
-        <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-3">
+        <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-3 shrink-0">
           <Wordmark />
           <button
             type="button"
@@ -150,7 +150,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </button>
         </div>
 
-        <div className="px-4 py-4">
+        <div className="px-4 py-4 shrink-0">
           <Button
             onClick={() => setPaletteOpen(true)}
             className="w-full justify-center gap-1.5 rounded-full border border-sidebar-border bg-transparent text-sm font-semibold text-sidebar-foreground hover:bg-sidebar-active"
@@ -167,7 +167,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           }}
         />
 
-        <div className="border-t border-sidebar-border p-3">
+        <div className="border-t border-sidebar-border p-3 shrink-0">
           <button
             type="button"
             onClick={() => setWorkspace((w) => workspaces[(workspaces.indexOf(w) + 1) % workspaces.length]!)}
@@ -183,9 +183,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      {/* Main column */}
-      <div className={cn("transition-[padding] duration-200 ease-out", open ? "lg:pl-[232px]" : "lg:pl-0")}>
-        <header className="sticky top-0 z-20 border-b border-border bg-card">
+      {/* Main column - Dedicated right scroll container */}
+      <div className="flex flex-1 flex-col min-w-0 h-screen overflow-y-auto overflow-x-hidden">
+        <header className="sticky top-0 z-20 border-b border-border bg-card/90 backdrop-blur-md shrink-0">
           <div className="flex h-14 items-center gap-3 px-4 sm:px-6">
             <button
               type="button"
@@ -243,7 +243,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main id="main" className="mx-auto w-full max-w-[1680px] px-4 pt-6 pb-24 sm:px-6 lg:pb-10">
+        <main id="main" className="flex-1 mx-auto w-full max-w-[1680px] px-4 pt-6 pb-24 sm:px-6 lg:pb-10">
           {children}
         </main>
       </div>

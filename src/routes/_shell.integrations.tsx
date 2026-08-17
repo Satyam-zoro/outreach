@@ -211,7 +211,7 @@ function IntegrationsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <PageIntro title="Integrations" subtitle="Connect Notion, your outreach channels, or import CSV history." />
 
       {/* Notion Dual Database Sync Box */}
