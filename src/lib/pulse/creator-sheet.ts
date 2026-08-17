@@ -174,6 +174,15 @@ export function useCreatorSheet(kind: SheetKind) {
 
   useEffect(() => {
     if (!hydrated) return;
+    if (data.rows.length === 0) {
+      const existing = window.localStorage.getItem(storageKey(kind));
+      if (existing) {
+        try {
+          const parsed = JSON.parse(existing);
+          if (Array.isArray(parsed?.rows) && parsed.rows.length > 0) return;
+        } catch {}
+      }
+    }
     window.localStorage.setItem(storageKey(kind), JSON.stringify(data));
   }, [data, hydrated, kind]);
 

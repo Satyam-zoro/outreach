@@ -21,6 +21,7 @@ import { CommandPalette } from "@/components/pulse/command-palette";
 import { mobileNav, navGroups, pageTitles } from "@/components/pulse/nav";
 import { WorkspaceLogo } from "@/components/pulse/workspace-logo";
 import { currentUser, workspaces } from "@/lib/pulse/data";
+import { getStoredNotionConfig, syncNotionDatabases } from "@/lib/pulse/notion";
 import { useTheme } from "@/lib/pulse/theme";
 import { cn } from "@/lib/utils";
 
@@ -94,6 +95,14 @@ export function AppShell({ children }: { children: ReactNode }) {
     const stored = window.localStorage.getItem("pulse-sidebar");
     if (stored === "collapsed") setOpen(false);
     if (window.matchMedia("(max-width: 1023px)").matches) setOpen(false);
+
+    // Initial background Notion auto-sync for any visitor/browser
+    const config = getStoredNotionConfig();
+    if (config.apiKey && (config.shortDbId || config.longDbId)) {
+      syncNotionDatabases(config).catch((err) => {
+        console.warn("Background Notion auto-sync:", err);
+      });
+    }
   }, []);
 
   const toggleSidebar = () => {
