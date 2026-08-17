@@ -84,26 +84,27 @@ export function buildFactsFromCreatorSheets(): OutreachFact[] {
 
   const processRow = (r: any, kind: "short" | "long") => {
     const cells = r.cells || {};
-    const platformStr = String(cells.platform || (kind === "short" ? "Instagram" : "YouTube"));
+    const rawPlatform = String(cells.platform || "").trim();
+    let channel: Channel = kind === "short" ? "Instagram" : "YouTube";
 
-    let channel: Channel = "Instagram";
-    if (platformStr.includes("YouTube")) {
+    const pLower = rawPlatform.toLowerCase();
+    if (pLower.includes("youtube") || pLower.includes("yt")) {
       channel = "YouTube";
-    } else if (platformStr.includes("TikTok")) {
+    } else if (pLower.includes("tiktok")) {
       channel = "TikTok";
-    } else if (platformStr.includes("Instagram") || platformStr.includes("Reels")) {
+    } else if (pLower.includes("instagram") || pLower.includes("ig") || pLower.includes("reels")) {
       channel = "Instagram";
-    } else if (platformStr.includes("LinkedIn")) {
+    } else if (pLower.includes("linkedin")) {
       channel = "LinkedIn";
-    } else if (platformStr.includes("X") || platformStr.includes("Twitter")) {
+    } else if (pLower.includes("twitter") || pLower === "x") {
       channel = "X";
-    } else if (platformStr.includes("WhatsApp")) {
+    } else if (pLower.includes("whatsapp")) {
       channel = "WhatsApp";
-    } else if (platformStr.includes("Podcast") || platformStr.includes("Newsletter") || platformStr.includes("Twitch")) {
+    } else if (pLower.includes("podcast") || pLower.includes("spotify") || pLower.includes("apple pod")) {
       channel = "Podcast";
-    } else if (platformStr.includes("Email")) {
+    } else if (pLower.includes("email") || pLower.includes("newsletter") || pLower.includes("substack")) {
       channel = "Email";
-    } else {
+    } else if (rawPlatform) {
       channel = "Other";
     }
 
