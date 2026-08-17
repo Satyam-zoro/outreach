@@ -15,7 +15,16 @@ export default defineConfig({
         "/api/notion": {
           target: "https://api.notion.com/v1",
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api\/notion/, ""),
+          rewrite: (urlPath) => {
+            try {
+              const url = new URL(urlPath, "http://localhost");
+              const queryPath = url.searchParams.get("path");
+              if (queryPath) {
+                return queryPath.startsWith("/") ? queryPath : `/${queryPath}`;
+              }
+            } catch {}
+            return urlPath.replace(/^\/api\/notion/, "") || "/";
+          },
         },
       },
     },
