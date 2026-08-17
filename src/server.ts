@@ -47,6 +47,52 @@ function isH3SwallowedErrorBody(body: string): boolean {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      const url = new URL(request.url);
+
+      // 1. Direct server-to-server Notion API Proxy
+      if (url.pathname.startsWith("/api/notion")) {
+        if (request.method === "OPTIONS") {
+          return new Response(null, {
+            status: 204,
+            headers: {
+              "Access-Control-Allow-Origin": "*",
+              "Access-Control-Allow-Methods": "GET, POST, PATCH, PUT, DELETE, OPTIONS",
+              "Access-Control-Allow-Headers": "*",
+            },
+          });
+        }
+
+        const notionPath = url.pathname.replace(/^\/api\/notion/, "") + url.search;
+        const targetUrl = `https://api.notion.com/v1${notionPath.startsWith("/") ? notionPath : `/${notionPath}`}`;
+
+        const forwardHeaders: Record<string, string> = {};
+        request.headers.forEach((value, key) => {
+          if (key.toLowerCase() !== "host") {
+            forwardHeaders[key] = value;
+          }
+        });
+
+        const bodyData = ["GET", "HEAD"].includes(request.method) ? undefined : await request.text();
+
+        const notionRes = await fetch(targetUrl, {
+          method: request.method,
+          headers: forwardHeaders,
+          body: bodyData,
+        });
+
+        const resHeaders = new Headers(notionRes.headers);
+        resHeaders.set("Access-Control-Allow-Origin", "*");
+        resHeaders.set("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, DELETE, OPTIONS");
+        resHeaders.set("Access-Control-Allow-Headers", "*");
+
+        const resText = await notionRes.text();
+        return new Response(resText, {
+          status: notionRes.status,
+          headers: resHeaders,
+        });
+      }
+
+      // 2. Standard TanStack Start SSR handler
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);
