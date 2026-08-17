@@ -385,7 +385,24 @@ export async function callNotionApi(
   const bodyStr = options.body ? JSON.stringify(options.body) : undefined;
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
 
-  // 1. Try local/Vercel server proxy (/api/notion)
+  // 1. Try Vercel Serverless / Edge Function (/api/notion?path=...)
+  try {
+    const res = await fetch(`/api/notion?path=${encodeURIComponent(normalizedPath)}`, {
+      method: options.method,
+      headers,
+      body: bodyStr,
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return { ok: true, status: res.status, data };
+    }
+    const errText = await res.text();
+    if (res.status !== 404 && res.status !== 405) {
+      return { ok: false, status: res.status, errorText: errText };
+    }
+  } catch {}
+
+  // 2. Try local server proxy (/api/notion/...)
   try {
     const res = await fetch(`/api/notion${normalizedPath}`, {
       method: options.method,
